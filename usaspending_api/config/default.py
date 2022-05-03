@@ -19,8 +19,9 @@ from pydantic import (
     SecretStr,
 )
 
-_SRC_ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.resolve()
-_PROJECT_ROOT_DIR = _SRC_ROOT_DIR.parent.parent.parent.resolve()
+_PROJECT_NAME = "usaspending-api"
+_PROJECT_ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.resolve()
+_SRC_ROOT_DIR = _PROJECT_ROOT_DIR / _PROJECT_NAME.replace("-", "_")
 
 # Placeholder sentinel value indicating a config var that is expected to be overridden in a runtime-env-specific
 # config declaration. If this value emerges, it has not yet been set in the runtime env config and must be.
@@ -50,11 +51,12 @@ class DefaultConfig(BaseSettings):
                 "DefaultConfig is just the base config and should not be instantiated. "
                 "Instantiate a subclass of this for a specific runtime environment."
             )
-        return BaseSettings.__new__(cls)
+        return super().__new__(cls)
 
     # ==== [Global] ====
     ENV_CODE: ClassVar[str] = _ENV_SPECIFIC_OVERRIDE
     COMPONENT_NAME = "USAspending API"
+    PROJECT_LOG_DIR = str(_SRC_ROOT_DIR / "logs")
 
     # ==== [Postgres] ====
     POSTGRES_URL: str = None
@@ -63,6 +65,9 @@ class DefaultConfig(BaseSettings):
     POSTGRES_PASSWORD: SecretStr = _ENV_SPECIFIC_OVERRIDE
     POSTGRES_HOST = _ENV_SPECIFIC_OVERRIDE
     POSTGRES_PORT = _ENV_SPECIFIC_OVERRIDE
+    # TODO: GET RID OF property(...) FIELDS! See note in comments in the tests/unit/test_config.py possibly look at
+    #  pre/post load validator(...) or root_validator(...) functions as an alternative to composing other fields,
+    #  or research more
     POSTGRES_DSN: PostgresDsn = property(lambda self: self._get_postgres_dsn())
 
     def _get_postgres_dsn(self) -> PostgresDsn:
@@ -90,6 +95,9 @@ class DefaultConfig(BaseSettings):
     ES_SCHEME = "https"
     ES_HOST = _ENV_SPECIFIC_OVERRIDE
     ES_PORT = ""
+    # TODO: GET RID OF property(...) FIELDS! See note in comments in the tests/unit/test_config.py possibly look at
+    #  pre/post load validator(...) or root_validator(...) functions as an alternative to composing other fields,
+    #  or research more
     ELASTICSEARCH_HOST: AnyHttpUrl = property(lambda self: self._get_elasticsearch_host())
 
     def _get_elasticsearch_host(self) -> AnyHttpUrl:
@@ -150,7 +158,9 @@ class DefaultConfig(BaseSettings):
     AWS_S3_BUCKET = _ENV_SPECIFIC_OVERRIDE
     AWS_S3_OUTPUT_PATH = "output"  # path within AWS_S3_BUCKET where output data will accumulate
     # Must declare as property, so that the overriding impl that uses a property will still override this
-    AWS_S3_ENDPOINT: str = property(lambda self: "s3.us-gov-west-1.amazonaws.com")
+    # TODO: GET RID OF property(...) FIELDS! See note in comments in the tests/unit/test_config.py possibly look at
+    #  pre/post load validator(...) or root_validator(...) functions as an alternative to composing other fields,
+    #  or research more    AWS_S3_ENDPOINT: str = property(lambda self: "s3.us-gov-west-1.amazonaws.com")
     AWS_STS_ENDPOINT = "sts.us-gov-west-1.amazonaws.com"
 
     class Config:
