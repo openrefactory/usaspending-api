@@ -37,7 +37,7 @@ if __name__ == "__main__":
     setup(
         name=_PROJECT_NAME,
         version="0.0.0",
-        #packages=find_packages(_PROJECT_NAME.replace("-", "_")),
+        packages=find_packages(),
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
