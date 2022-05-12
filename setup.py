@@ -37,7 +37,7 @@ if __name__ == "__main__":
     setup(
         name=_PROJECT_NAME,
         version="0.0.0",
-        packages=find_packages(),
+        packages=find_packages(include=['usaspending_api', 'usaspending_api.*']),
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
