@@ -6,7 +6,7 @@ See:
 """
 import pathlib
 
-from setuptools import setup
+from setuptools import setup,find_packages
 
 # Project paths
 _PROJECT_NAME = "usaspending-api"
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     setup(
         name=_PROJECT_NAME,
         version="0.0.0",
-        packages=find_packages(),
+        packages=find_packages(where=_PROJECT_NAME.replace("-", "_")),
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
