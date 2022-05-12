@@ -36,8 +36,8 @@ if __name__ == "__main__":
     # as some package manager environments were not able to make sense of pyproject.toml
     setup(
         name=_PROJECT_NAME,
-        version="2.0.0",
-        packages=find_packages(),
+        version="3.0.0",
+        packages=find_packages(include=['usaspending_api', 'usaspending_api.**']),
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
