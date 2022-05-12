@@ -6,7 +6,7 @@ See:
 """
 import pathlib
 
-from setuptools import setup,find_packages
+from setuptools import setup,find_packages,find_namespace_packages
 
 # Project paths
 _PROJECT_NAME = "usaspending-api"
