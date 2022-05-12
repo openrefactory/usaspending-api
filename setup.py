@@ -10,7 +10,7 @@ from setuptools import setup,find_packages,find_namespace_packages
 
 # Project paths
 _PROJECT_NAME = "usaspending-api"
-_SRC_ROOT_DIR = pathlib.Path(__file__).parent.resolve()
+_SRC_ROOT_DIR = pathlib.Path(__file__).parent.resolve() / _PROJECT_NAME.replace("-", "_")
 _PROJECT_ROOT_DIR = _SRC_ROOT_DIR.parent.resolve()
 
 # Requirements
