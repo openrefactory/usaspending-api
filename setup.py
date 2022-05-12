@@ -1,5 +1,4 @@
 """This setup.py module accommodates dynamic core metadata via a setuptools build-system backend
-
 See:
     - More background on this approach documented in ./pyproject.toml [build-system] and [project] tables
     - Details of setuptools.setup parameters:
@@ -39,6 +38,7 @@ if __name__ == "__main__":
         name=_PROJECT_NAME,
         version="0.0.0",
         packages=[_PROJECT_NAME.replace("-", "_")],
+        package_dir = {'': 'usaspending_api'},
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
