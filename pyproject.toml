@@ -6,8 +6,8 @@
 # - pip frontend using pyproject.toml: https://pip.pypa.io/en/stable/reference/build-system/pyproject-toml/
 # - setuptools backend using pyproject.toml: https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 #   - NOTE: This was "New in 61.0.0" and is still considered experimental as of 2022-04-05
-requires = ["pip", "setuptools"]
-#requires = ["pip>=22.1", "setuptools>=46.0", "wheel", "attrs"]
+#requires = ["pip", "setuptools"]
+requires = ["pip>=22.1", "setuptools>=46.0", "wheel", "attrs"]
 build-backend = "setuptools.build_meta"
 
 [project]
