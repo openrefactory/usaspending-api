@@ -37,6 +37,7 @@ if __name__ == "__main__":
     # as some package manager environments were not able to make sense of pyproject.toml
     setup(
         name=_PROJECT_NAME,
+        packages="."
         install_requires=_INSTALL_REQUIRES,
         extras_require=_EXTRAS,
     )
