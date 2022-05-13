@@ -53,7 +53,8 @@ classifiers = [
 dynamic = ["dependencies", "optional-dependencies"]
 [tool.setuptools.packages.find]
 # See: https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#setuptools-specific-configuration
-where = ["usaspending_api"]  # list of folders that contain the packages (["."] by default)
+#where = ["usaspending_api"]  # list of folders that contain the packages (["."] by default)
+where = ["."]  # list of folders that contain the packages (["."] by default)
 
 [tool.black]
 line-length = 120
