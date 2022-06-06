@@ -1,5 +1,6 @@
 ARG api_image
 FROM $api_image
+RUN echo $api_image
 RUN yum install -y \
     git \
     gcc-c++ \
