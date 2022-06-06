@@ -1,4 +1,4 @@
-ARG api_image=usaspending-api:latest
+ARG api_image=usaspending-api:staging
 FROM $api_image
 RUN yum install -y \
     git \
