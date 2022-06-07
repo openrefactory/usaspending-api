@@ -237,7 +237,7 @@ class DefaultConfig(BaseSettings):
     # However ES does not appear to be able too handle that when several Executors make that request in parallel
     # Good tips from ES: https:#www.elastic.co/guide/en/elasticsearch/reference/6.2/tune-for-indexing-speed.html
     # Reducing to 10,000 DB rows per bulk indexing operation
-    SPARK_PARTITION_ROWS: int = 100000
+    SPARK_PARTITION_ROWS: int = 10000
     SPARK_MAX_PARTITIONS: int = 100000
 
     # Spark is connecting JDBC to Elasticsearch here and this config calibrates the throughput from one to the other,

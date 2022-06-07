@@ -99,7 +99,7 @@ TABLE_SPEC = {
         "model": TransactionFPDS,
         "source_table": "transaction_fpds",
         "destination_database": "raw",
-        "partition_column": "detached_award_procurement_id",
+        "partition_column": "transaction_id",
         "partition_column_type": "numeric",
         "delta_table_create_sql": transaction_fpds_sql_string,
         "custom_schema": "",
