@@ -104,6 +104,15 @@ TABLE_SPEC = {
         "delta_table_create_sql": transaction_fpds_sql_string,
         "custom_schema": "",
     },
+    "transaction_fpds_speed": {
+        "model": TransactionFPDS,
+        "source_table": "transaction_fpds",
+        "destination_database": "raw",
+        "partition_column": "detached_award_procurement_id",
+        "partition_column_type": "numeric",
+        "delta_table_create_sql": transaction_fpds_sql_string,
+        "custom_schema": "",
+    },
     "transaction_normalized": {
         "model": TransactionNormalized,
         "source_table": "transaction_normalized",
