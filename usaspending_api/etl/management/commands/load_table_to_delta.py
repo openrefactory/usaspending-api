@@ -57,7 +57,7 @@ class Command(BaseCommand):
         logger = get_jvm_logger(spark)
 
         # Resolve Parameters
-        destination_table = "transaction_fpds_speed_v3"
+        destination_table = "transaction_fpds_speed_3"
 
         table_spec = TABLE_SPEC[destination_table]
         destination_database = table_spec["destination_database"]
