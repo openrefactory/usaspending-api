@@ -104,7 +104,7 @@ TABLE_SPEC = {
         "delta_table_create_sql": transaction_fpds_sql_string,
         "custom_schema": "",
     },
-    "transaction_fpds_speed": {
+    "transaction_fpds_speed_3": {
         "model": TransactionFPDS,
         "source_table": "transaction_fpds",
         "destination_database": "raw",
