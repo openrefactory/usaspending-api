@@ -115,9 +115,9 @@ transaction_search_load_sql_string = fr"""
         {",".join([col for col in TRANSACTION_SEARCH_COLUMNS])}
     )
     SELECT
-        transaction_normalized.id AS transaction_id,
-        transaction_normalized.award_id,
-        transaction_normalized.modification_number,
+        transaction_normalized_temp_pipe_286.id AS transaction_id,
+        transaction_normalized_temp_pipe_286.award_id,
+        transaction_normalized_temp_pipe_286.modification_number,
         transaction_fpds.detached_award_proc_unique,
         transaction_fabs.afa_generated_unique,
         awards.generated_unique_award_id,
@@ -125,46 +125,46 @@ transaction_search_load_sql_string = fr"""
         awards.uri,
         awards.piid,
 
-        DATE(transaction_normalized.action_date) AS action_date,
-        DATE(transaction_normalized.action_date + interval '3 months') AS fiscal_action_date,
-        DATE(transaction_normalized.last_modified_date) AS last_modified_date,
-        transaction_normalized.fiscal_year,
+        DATE(transaction_normalized_temp_pipe_286.action_date) AS action_date,
+        DATE(transaction_normalized_temp_pipe_286.action_date + interval '3 months') AS fiscal_action_date,
+        DATE(transaction_normalized_temp_pipe_286.last_modified_date) AS last_modified_date,
+        transaction_normalized_temp_pipe_286.fiscal_year,
         awards.certified_date AS award_certified_date,
         YEAR(awards.certified_date + interval '3 months') AS award_fiscal_year,
-        transaction_normalized.update_date,
+        transaction_normalized_temp_pipe_286.update_date,
         awards.update_date AS award_update_date,
         DATE(awards.date_signed) AS award_date_signed,
-        GREATEST(transaction_normalized.update_date, awards.update_date) AS etl_update_date,
+        GREATEST(transaction_normalized_temp_pipe_286.update_date, awards.update_date) AS etl_update_date,
         awards.period_of_performance_start_date,
         awards.period_of_performance_current_end_date,
 
-        transaction_normalized.type,
+        transaction_normalized_temp_pipe_286.type,
         awards.type_description,
         awards.category AS award_category,
-        transaction_normalized.description AS transaction_description,
+        transaction_normalized_temp_pipe_286.description AS transaction_description,
 
         CAST(COALESCE(
             CASE
-                WHEN transaction_normalized.type IN('07','08') THEN awards.total_subsidy_cost
+                WHEN transaction_normalized_temp_pipe_286.type IN('07','08') THEN awards.total_subsidy_cost
                 ELSE awards.total_obligation
             END,
             0
         ) AS NUMERIC(23, 2)) AS award_amount,
         CAST(COALESCE(
             CASE
-                WHEN transaction_normalized.type IN('07','08') THEN transaction_normalized.original_loan_subsidy_cost
-                ELSE transaction_normalized.federal_action_obligation
+                WHEN transaction_normalized_temp_pipe_286.type IN('07','08') THEN transaction_normalized_temp_pipe_286.original_loan_subsidy_cost
+                ELSE transaction_normalized_temp_pipe_286.federal_action_obligation
             END,
             0
         ) AS NUMERIC(23, 2)) AS generated_pragmatic_obligation,
-        CAST(COALESCE(transaction_normalized.federal_action_obligation, 0) AS NUMERIC(23, 2))
+        CAST(COALESCE(transaction_normalized_temp_pipe_286.federal_action_obligation, 0) AS NUMERIC(23, 2))
             AS federal_action_obligation,
-        CAST(COALESCE(transaction_normalized.original_loan_subsidy_cost, 0) AS NUMERIC(23, 2))
+        CAST(COALESCE(transaction_normalized_temp_pipe_286.original_loan_subsidy_cost, 0) AS NUMERIC(23, 2))
             AS original_loan_subsidy_cost,
-        CAST(COALESCE(transaction_normalized.face_value_loan_guarantee, 0) AS NUMERIC(23, 2))
+        CAST(COALESCE(transaction_normalized_temp_pipe_286.face_value_loan_guarantee, 0) AS NUMERIC(23, 2))
             AS face_value_loan_guarantee,
 
-        transaction_normalized.business_categories,
+        transaction_normalized_temp_pipe_286.business_categories,
         transaction_fpds.naics AS naics_code,
         naics.description AS naics_description,
         transaction_fpds.product_or_service_code,
@@ -262,8 +262,8 @@ transaction_search_load_sql_string = fr"""
             AS awarding_toptier_agency_id,
         (SELECT first(a.id) FROM global_temp.agency a WHERE a.toptier_agency_id = TFA.toptier_agency_id AND a.toptier_flag = TRUE)
             AS funding_toptier_agency_id,
-        transaction_normalized.awarding_agency_id,
-        transaction_normalized.funding_agency_id,
+        transaction_normalized_temp_pipe_286.awarding_agency_id,
+        transaction_normalized_temp_pipe_286.funding_agency_id,
         TAA.name AS awarding_toptier_agency_name,
         TFA.name AS funding_toptier_agency_name,
         SAA.name AS awarding_subtier_agency_name,
@@ -283,11 +283,11 @@ transaction_search_load_sql_string = fr"""
         FO.office_code AS funding_office_code,
         FO.office_name AS funding_office_name
     FROM
-        raw.transaction_normalized
+        raw.transaction_normalized_temp_pipe_286
     LEFT OUTER JOIN
-        raw.transaction_fabs ON (transaction_normalized.id = transaction_fabs.transaction_id AND transaction_normalized.is_fpds = false)
+        raw.transaction_fabs ON (transaction_normalized_temp_pipe_286.id = transaction_fabs.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = false)
     LEFT OUTER JOIN
-        raw.transaction_fpds ON (transaction_normalized.id = transaction_fpds.transaction_id AND transaction_normalized.is_fpds = true)
+        raw.transaction_fpds ON (transaction_normalized_temp_pipe_286.id = transaction_fpds.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = true)
     LEFT OUTER JOIN
         global_temp.references_cfda ON (transaction_fabs.cfda_number = references_cfda.program_number)
     LEFT OUTER JOIN
@@ -303,15 +303,15 @@ transaction_search_load_sql_string = fr"""
             )))
         )
     LEFT OUTER JOIN
-        raw.awards ON (transaction_normalized.award_id = awards.id)
+        raw.awards ON (transaction_normalized_temp_pipe_286.award_id = awards.id)
     LEFT OUTER JOIN
-        global_temp.agency AS AA ON (transaction_normalized.awarding_agency_id = AA.id)
+        global_temp.agency AS AA ON (transaction_normalized_temp_pipe_286.awarding_agency_id = AA.id)
     LEFT OUTER JOIN
         global_temp.toptier_agency AS TAA ON (AA.toptier_agency_id = TAA.toptier_agency_id)
     LEFT OUTER JOIN
         global_temp.subtier_agency AS SAA ON (AA.subtier_agency_id = SAA.subtier_agency_id)
     LEFT OUTER JOIN
-        global_temp.agency AS FA ON (transaction_normalized.funding_agency_id = FA.id)
+        global_temp.agency AS FA ON (transaction_normalized_temp_pipe_286.funding_agency_id = FA.id)
     LEFT OUTER JOIN
         global_temp.toptier_agency AS TFA ON (FA.toptier_agency_id = TFA.toptier_agency_id)
     LEFT OUTER JOIN
@@ -331,7 +331,7 @@ transaction_search_load_sql_string = fr"""
             faba.award_id IS NOT NULL
         GROUP BY
             faba.award_id
-    ) tas ON (tas.award_id = transaction_normalized.award_id)
+    ) tas ON (tas.award_id = transaction_normalized_temp_pipe_286.award_id)
     LEFT OUTER JOIN (
         SELECT DISTINCT state_alpha, county_numeric, UPPER(county_name) AS county_name
         FROM global_temp.ref_city_county_state_code
@@ -467,7 +467,7 @@ transaction_search_load_sql_string = fr"""
         INNER JOIN global_temp.toptier_agency agency ON (fa.parent_toptier_agency_id = agency.toptier_agency_id)
         WHERE faba.award_id IS NOT NULL
         GROUP BY faba.award_id
-    ) TREASURY_ACCT ON (TREASURY_ACCT.award_id = transaction_normalized.award_id)
+    ) TREASURY_ACCT ON (TREASURY_ACCT.award_id = transaction_normalized_temp_pipe_286.award_id)
     LEFT JOIN (
         SELECT
             faba.award_id,
@@ -491,11 +491,11 @@ transaction_search_load_sql_string = fr"""
         INNER JOIN raw.financial_accounts_by_awards faba ON taa.treasury_account_identifier = faba.treasury_account_id
         WHERE faba.award_id IS NOT NULL
         GROUP BY faba.award_id
-    ) FEDERAL_ACCT ON (FEDERAL_ACCT.award_id = transaction_normalized.award_id)
+    ) FEDERAL_ACCT ON (FEDERAL_ACCT.award_id = transaction_normalized_temp_pipe_286.award_id)
     LEFT OUTER JOIN
         global_temp.office AO ON COALESCE(transaction_fpds.awarding_office_code, transaction_fabs.awarding_office_code) = AO.office_code
     LEFT OUTER JOIN
         global_temp.office FO ON COALESCE(transaction_fpds.funding_office_code, transaction_fabs.funding_office_code) = FO.office_code
     WHERE
-        transaction_normalized.action_date >= '2000-10-01'
+        transaction_normalized_temp_pipe_286.action_date >= '2000-10-01'
 """
