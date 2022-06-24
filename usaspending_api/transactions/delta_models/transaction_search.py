@@ -344,7 +344,7 @@ transaction_search_load_sql_string = fr"""
         FROM global_temp.ref_city_county_state_code
     ) AS pop_county_lookup ON (
         pop_county_lookup.state_alpha = COALESCE(transaction_fpds_temp_pipe_286.place_of_performance_state, transaction_fabs_temp_pipe_286.place_of_perfor_state_code)
-        AND pop_county_lookup.county_numeric = LPAD(CAST(CAST(REGEXP_EXTRACT(COALESCE(transaction_fpds.place_of_perform_county_co, transaction_fabs_temp_pipe_286.place_of_perform_county_co), '^[A-Z]*(\\d+)(?:\\.\\d+)?$', 1) AS SHORT) AS STRING), 3, '0')
+        AND pop_county_lookup.county_numeric = LPAD(CAST(CAST(REGEXP_EXTRACT(COALESCE(transaction_fpds_temp_pipe_286.place_of_perform_county_co, transaction_fabs_temp_pipe_286.place_of_perform_county_co), '^[A-Z]*(\\d+)(?:\\.\\d+)?$', 1) AS SHORT) AS STRING), 3, '0')
     )
     LEFT OUTER JOIN
         global_temp.ref_country_code AS pop_country_lookup ON (
