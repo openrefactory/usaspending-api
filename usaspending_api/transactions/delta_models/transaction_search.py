@@ -118,7 +118,7 @@ transaction_search_load_sql_string = fr"""
         transaction_normalized_temp_pipe_286.id AS transaction_id,
         transaction_normalized_temp_pipe_286.award_id,
         transaction_normalized_temp_pipe_286.modification_number,
-        transaction_fpds_df.detached_award_proc_unique,
+        transaction_fpds_temp_pipe_286.detached_award_proc_unique,
         transaction_fabs_temp_pipe_286.afa_generated_unique,
         awards_temp_pipe_286.generated_unique_award_id,
         awards_temp_pipe_286.fain,
@@ -134,7 +134,7 @@ transaction_search_load_sql_string = fr"""
         transaction_normalized_temp_pipe_286.update_date,
         awards_temp_pipe_286.update_date AS award_update_date,
         DATE(awards_temp_pipe_286.date_signed) AS award_date_signed,
-        GREATEST(transaction_normalized_temp_pipe_286.update_date, awards.update_date) AS etl_update_date,
+        GREATEST(transaction_normalized_temp_pipe_286.update_date, awards_temp_pipe_286.update_date) AS etl_update_date,
         awards_temp_pipe_286.period_of_performance_start_date,
         awards_temp_pipe_286.period_of_performance_current_end_date,
 
@@ -303,7 +303,7 @@ transaction_search_load_sql_string = fr"""
             )))
         )
     LEFT OUTER JOIN
-        global_temp.awards_temp_pipe_286 ON (transaction_normalized_temp_pipe_286.award_id = awards.id)
+        global_temp.awards_temp_pipe_286 ON (transaction_normalized_temp_pipe_286.award_id = awards_temp_pipe_286.id)
     LEFT OUTER JOIN
         global_temp.agency AS AA ON (transaction_normalized_temp_pipe_286.awarding_agency_id = AA.id)
     LEFT OUTER JOIN
