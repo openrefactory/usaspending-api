@@ -285,7 +285,7 @@ transaction_search_load_sql_string = fr"""
     FROM
         global_temp.transaction_normalized_temp_pipe_286
     LEFT OUTER JOIN
-        global_temp.transaction_fabs_temp_pipe_286 ON (transaction_normalized_temp_pipe_286.id = transaction_fabs.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = false)
+        global_temp.transaction_fabs_temp_pipe_286 ON (transaction_normalized_temp_pipe_286.id = transaction_fabs_temp_pipe_286.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = false)
     LEFT OUTER JOIN
         raw.transaction_fpds ON (transaction_normalized_temp_pipe_286.id = transaction_fpds.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = true)
     LEFT OUTER JOIN
