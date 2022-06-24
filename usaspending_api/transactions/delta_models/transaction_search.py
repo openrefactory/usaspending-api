@@ -326,7 +326,7 @@ transaction_search_load_sql_string = fr"""
             SORT_ARRAY(COLLECT_SET(taa.treasury_account_identifier), TRUE) treasury_account_identifiers
         FROM
             global_temp.treasury_appropriation_account taa
-        INNER JOIN raw.financial_accounts_by_awards faba ON taa.treasury_account_identifier = faba.treasury_account_id
+        INNER JOIN global_temp.financial_accounts_by_awards_temp_pipe_286 faba ON taa.treasury_account_identifier = faba.treasury_account_id
         WHERE
             faba.award_id IS NOT NULL
         GROUP BY
@@ -462,7 +462,7 @@ transaction_search_load_sql_string = fr"""
                 TRUE
             ) tas_components
         FROM global_temp.treasury_appropriation_account taa
-        INNER JOIN raw.financial_accounts_by_awards faba ON (taa.treasury_account_identifier = faba.treasury_account_id)
+        INNER JOIN global_temp.financial_accounts_by_awards_temp_pipe_286 faba ON (taa.treasury_account_identifier = faba.treasury_account_id)
         INNER JOIN global_temp.federal_account fa ON (taa.federal_account_id = fa.id)
         INNER JOIN global_temp.toptier_agency agency ON (fa.parent_toptier_agency_id = agency.toptier_agency_id)
         WHERE faba.award_id IS NOT NULL
@@ -488,7 +488,7 @@ transaction_search_load_sql_string = fr"""
             ) defc
         FROM global_temp.federal_account fa
         INNER JOIN global_temp.treasury_appropriation_account taa ON fa.id = taa.federal_account_id
-        INNER JOIN raw.financial_accounts_by_awards faba ON taa.treasury_account_identifier = faba.treasury_account_id
+        INNER JOIN global_temp.financial_accounts_by_awards_temp_pipe_286 faba ON taa.treasury_account_identifier = faba.treasury_account_id
         WHERE faba.award_id IS NOT NULL
         GROUP BY faba.award_id
     ) FEDERAL_ACCT ON (FEDERAL_ACCT.award_id = transaction_normalized_temp_pipe_286.award_id)
