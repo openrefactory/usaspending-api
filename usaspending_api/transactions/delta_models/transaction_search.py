@@ -283,7 +283,7 @@ transaction_search_load_sql_string = fr"""
         FO.office_code AS funding_office_code,
         FO.office_name AS funding_office_name
     FROM
-        global_temp.transaction_normalized_temp_pipe_286
+        raw.transaction_normalized_temp_pipe_286
     LEFT OUTER JOIN
         raw.transaction_fabs ON (transaction_normalized_temp_pipe_286.id = transaction_fabs.transaction_id AND transaction_normalized_temp_pipe_286.is_fpds = false)
     LEFT OUTER JOIN
