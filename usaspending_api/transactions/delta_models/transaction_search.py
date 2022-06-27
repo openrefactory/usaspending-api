@@ -229,7 +229,10 @@ transaction_search_load_sql_string = fr"""
                 END
             )))
         ) AS recipient_hash,
+        /*
         RECIPIENT_HASH_AND_LEVELS.recipient_levels,
+        */
+        NULL AS recipient_levels,
         UPPER(COALESCE(
             recipient_lookup.legal_business_name,
             transaction_fpds.awardee_or_recipient_legal,
@@ -368,6 +371,7 @@ transaction_search_load_sql_string = fr"""
                 END
             )))
         )
+    /*
     LEFT OUTER JOIN (
         SELECT recipient_hash, uei, SORT_ARRAY(COLLECT_SET(recipient_level), TRUE) AS recipient_levels
         FROM raw.recipient_profile
@@ -384,6 +388,7 @@ transaction_search_load_sql_string = fr"""
         )
         AND recipient_lookup.legal_business_name IS NOT NULL
     )
+    */
     LEFT OUTER JOIN (
         SELECT code, name, fips, MAX(id)
         FROM global_temp.state_data
