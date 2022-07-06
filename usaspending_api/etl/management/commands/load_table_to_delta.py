@@ -7,7 +7,7 @@ from usaspending_api.awards.delta_models import (
     FINANCIAL_ACCOUNTS_BY_AWARDS_COLUMNS,
     financial_accounts_by_awards_sql_string,
 )
-from usaspending_api.common.etl.spark import extract_db_data_frame, get_partition_bounds_sql, load_delta_table
+from usaspending_api.common.etl.spark import extract_partition_data, get_partition_bounds_sql, load_delta_table
 from usaspending_api.common.helpers.spark_helpers import (
     configure_spark_session,
     get_active_spark_session,
@@ -281,23 +281,21 @@ class Command(BaseCommand):
                 raise ValueError("partition_column_type should be either 'numeric' or 'date'")
 
             # Read from table or view
-            df = extract_db_data_frame(
+            jdbc_props = get_jdbc_connection_properties()
+            read_args = {}
+            partitions, min_val, max_val, partition_args = extract_partition_data(
                 spark,
-                get_jdbc_connection_properties(),
+                jdbc_props,
                 jdbc_url,
                 SPARK_PARTITION_ROWS,
-                get_partition_bounds_sql(
-                    source_table,
-                    partition_column,
-                    partition_column,
-                    is_partitioning_col_unique=False,
-                ),
                 source_table,
                 partition_column,
                 is_numeric_partitioning_col=is_numeric_partitioning_col,
                 is_date_partitioning_col=is_date_partitioning_col,
-                custom_schema=custom_schema,
             )
+            read_args.update(partition_args)
+            read_args.update({"url": jdbc_url, "table": source_table, "properties": jdbc_props})
+            df = spark.read.options(customSchema=custom_schema).jdbc(**read_args)
         else:
             df = spark.read.options(customSchema=custom_schema).jdbc(
                 url=jdbc_url,

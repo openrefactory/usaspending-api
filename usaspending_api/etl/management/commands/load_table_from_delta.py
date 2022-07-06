@@ -11,6 +11,8 @@ from usaspending_api.common.helpers.spark_helpers import (
     get_jdbc_url,
     get_jvm_logger,
 )
+from usaspending_api.common.etl.spark import extract_partition_data
+from usaspending_api.config import CONFIG
 from usaspending_api.etl.management.commands.create_delta_table import TABLE_SPEC
 from usaspending_api.database_scripts.matview_generator.chunked_matview_sql_generator import (
     make_copy_indexes,
@@ -25,6 +27,8 @@ SPECIAL_TYPES_MAPPING = {
     db.models.JSONField: {"postgres": "JSONB using {column_name}::JSON", "delta": "TEXT"},
     "JSONB": {"postgres": "JSONB using {column_name}::JSON", "delta": "TEXT"},
 }
+
+SPARK_PARTITION_ROWS = CONFIG.SPARK_PARTITION_ROWS
 
 
 class Command(BaseCommand):
@@ -115,7 +119,6 @@ class Command(BaseCommand):
         # Resolve Parameters
         delta_table = options["delta_table"]
         recreate = options["recreate"]
-        create = False
 
         table_spec = TABLE_SPEC[delta_table]
         special_columns = {}
@@ -128,6 +131,8 @@ class Command(BaseCommand):
         # Postgres side - source
         postgres_table = None
         postgres_model = table_spec["model"]
+        partition_col = table_spec["partition_column"]
+        partition_column_type = table_spec["partition_column_type"]
         postgres_schema = table_spec["source_database"] or table_spec["swap_schema"]
         postgres_table_name = table_spec["source_table"] or table_spec["swap_table"]
         postgres_cols = table_spec["source_schema"]
@@ -176,27 +181,60 @@ class Command(BaseCommand):
             logger.info(f"{temp_table} dropped.")
             temp_dest_table_exists = False
 
-        make_new_table = (not temp_dest_table_exists)
+        make_new_table = not temp_dest_table_exists
         # Recreate the table if it doesn't exist. Spark's df.write automatically does this but doesn't account for
         # the extra metadata (indexes, constraints, defaults) which CREATE TABLE X LIKE Y accounts for.
         # If there is no postgres_table to base it on, it just relies on spark to make it and work with delta table
         if make_new_table and (postgres_table or postgres_cols):
+            partition_sql = "" if not partition_col else f"PARTITION BY RANGE ({partition_col})"
             if postgres_table:
                 create_temp_sql = f"""
                     CREATE TABLE {temp_table} (
                         LIKE {postgres_table} INCLUDING DEFAULTS INCLUDING IDENTITY
                     )
+                    {partition_sql}
                 """
             else:
                 create_temp_sql = f"""
                     CREATE TABLE {temp_table} (
                         {", ".join([f'{key} {val}' for key, val in postgres_cols.items()])}
                     )
+                    {partition_sql}
                 """
             with db.connection.cursor() as cursor:
                 logger.info(f"Creating {temp_table}")
                 cursor.execute(create_temp_sql)
                 logger.info(f"{temp_table} created.")
+
+                # If we're partitioning, we need to make the partitions based on how we made them in delta
+                partition_sql = []
+                if partition_col:
+                    if partition_column_type == "numeric":
+                        is_numeric_partitioning_col = True
+                        is_date_partitioning_col = False
+                    elif partition_column_type == "date":
+                        is_numeric_partitioning_col = False
+                        is_date_partitioning_col = True
+                    else:
+                        raise ValueError("partition_column_type should be either 'numeric' or 'date'")
+
+                    partitions, min_val, max_val, partition_args = extract_partition_data(
+                        spark,
+                        get_jdbc_connection_properties(),
+                        jdbc_url,
+                        SPARK_PARTITION_ROWS,
+                        delta_table,
+                        partition_col,
+                        db_type="delta",
+                        is_numeric_partitioning_col=is_numeric_partitioning_col,
+                        is_date_partitioning_col=is_date_partitioning_col,
+                    )
+                    for i, partition in enumerate(partitions):
+                        partition_name = f"{temp_table}_part_{i}"
+                        partition_sql.append(
+                            f"CREATE TABLE {partition_name} PARTITION OF {temp_table}"
+                            f" FOR VALUES FROM ({partition[0]}) TO ({partition[1]})"
+                        )
 
                 # Copy over the constraints before indexes
                 # Note: we could of included constraints above (`INCLUDING CONSTRAINTS`) but we need to drop the
@@ -235,8 +273,10 @@ class Command(BaseCommand):
         for i, split_df in enumerate(split_dfs):
             logger.info(f"LOAD: Loading part {i+1} of {split_df_count} (note: unequal part sizes)")
             split_df.write.options(truncate=True).jdbc(
-                url=jdbc_url, table=temp_table, mode="overwrite", properties=get_jdbc_connection_properties(
-                    boost_writing=True)
+                url=jdbc_url,
+                table=temp_table,
+                mode="overwrite",
+                properties=get_jdbc_connection_properties(boost_writing=True),
             )
             logger.info(f"LOAD: Part {i+1} of {split_df_count} loaded (note: unequal part sizes)")
         logger.info(f"LOAD (FINISH): Loaded data from Delta table {delta_table} to {temp_table}")
@@ -248,7 +288,7 @@ class Command(BaseCommand):
                 # TODO: dynamically set rds_core_count by a setting per environment.
                 copy_index_sql = []
                 rds_core_count = 8
-                index_performance_sql = f'SET max_parallel_maintenance_workers = {rds_core_count}'
+                index_performance_sql = f"SET max_parallel_maintenance_workers = {rds_core_count}"
                 copy_index_sql.append(index_performance_sql)
 
                 # Copy over the indexes, preserving the names (mostly, includes "_temp")

@@ -319,3 +319,10 @@ def sort_with_null_last(to_sort, sort_key, sort_order, tie_breaker=None):
         key=lambda x: ((x[sort_key] is None) == (sort_order == "asc"), x[sort_key], x[tie_breaker]),
         reverse=(sort_order == "desc"),
     )
+
+
+def batch(iterable, n=1):
+    """ Simple function to create batches from a list """
+    length = len(iterable)
+    for ndx in range(0, length, n):
+        yield iterable[ndx : min(ndx + n, length)]

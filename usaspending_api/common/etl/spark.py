@@ -1,3 +1,5 @@
+from typing import Literal
+import pandas as pd
 from itertools import chain
 from pyspark.sql.functions import to_date, lit, expr
 from pyspark.sql.types import StructType
@@ -5,27 +7,25 @@ from pyspark.sql import DataFrame, SparkSession
 
 from usaspending_api.config import CONFIG
 from usaspending_api.common.helpers.spark_helpers import get_jvm_logger
+from usaspending_api.common.helpers.generic_helper import batch
 
 MAX_PARTITIONS = CONFIG.SPARK_MAX_PARTITIONS
 
 
-def extract_db_data_frame(
+def extract_partition_data(
     spark: SparkSession,
     conn_props: dict,
     jdbc_url: str,
     partition_rows: int,
-    min_max_sql: str,
     table: str,
     partitioning_col: str,
+    db_type: Literal["delta", "postgres"] = "postgres",
     is_numeric_partitioning_col: bool = True,
     is_date_partitioning_col: bool = False,
-    custom_schema: StructType = None,
-) -> DataFrame:
+):
     logger = get_jvm_logger(spark)
 
-    logger.info(f"Getting partition bounds using SQL:\n{min_max_sql}")
-
-    data_df = None
+    partition_args = {}
 
     logger.info(
         f"Running extract for table {table} "
@@ -36,7 +36,17 @@ def extract_db_data_frame(
         raise ValueError("Partitioning col cannot be both numeric and date. Pick one.")
 
     # Get the bounds of the data we are extracting, so we can let spark partition it
-    min_max_df = spark.read.jdbc(url=jdbc_url, table=min_max_sql, properties=conn_props)
+    min_max_sql = get_partition_bounds_sql(
+        table,
+        partitioning_col,
+        partitioning_col,
+        is_partitioning_col_unique=False,
+    )
+    logger.info(f"Getting partition bounds using SQL:\n{min_max_sql}")
+    if db_type == "postgres":
+        min_max_df = spark.read.jdbc(url=jdbc_url, table=min_max_sql, properties=conn_props)
+    else:
+        min_max_df = spark.sql(min_max_sql)
     if is_date_partitioning_col:
         # Ensure it is a date (e.g. if date in string format, convert to date)
         min_max_df = min_max_df.withColumn(min_max_df.columns[0], to_date(min_max_df[0])).withColumn(
@@ -62,15 +72,13 @@ def extract_db_data_frame(
 
         logger.info(f"{partitions} partitions to extract at approximately {partition_rows} rows each.")
 
-        data_df = spark.read.options(customSchema=custom_schema).jdbc(
-            url=jdbc_url,
-            table=table,
-            column=partitioning_col,
-            lowerBound=min_val,
-            upperBound=max_val,
-            numPartitions=partitions,
-            properties=conn_props,
-        )
+        partition_args = {
+            "column": partitioning_col,
+            "lowerBound": min_val,
+            "upperBound": max_val,
+            "numPartitions": partitions,
+        }
+        partitions = batch(range(min_val, max_val + 1), partitions)
     elif is_date_partitioning_col:
         logger.info(f"Deriving partitions from dates in column: {partitioning_col}")
         # Assume we want a partition per distinct date, and cover every date in the range from min to max, inclusive
@@ -78,47 +86,50 @@ def extract_db_data_frame(
         # 3/5ths or more of the total dates in that range, use the distinct date values from the data set -- but ONLY
         # if that distinct count is less than MAX_PARTITIONS
         date_delta = max_val - min_val
-        partitions = date_delta.days + 1
-        if (count / partitions) < 0.6 or True:  # Forcing this path, see comment in else below
+        partition_count = date_delta.days + 1
+        partitions = [str(date) for date in pd.date_range(min_val, max_val, freq="d")]
+        if (count / partition_count) < 0.6 or True:  # Forcing this path, see comment in else below
             logger.info(
-                f"Partitioning by date in col {partitioning_col} would yield {partitions} but only {count} "
+                f"Partitioning by date in col {partitioning_col} would yield {partition_count} but only {count} "
                 f"distinct dates in the dataset. This partition range is too sparse. Going to query the "
                 f"distinct dates and use as partitions if less than MAX_PARTITIONS ({MAX_PARTITIONS})"
             )
             if count > MAX_PARTITIONS:
                 fail_msg = (
-                    f"Aborting job run because {partitions} partitions "
+                    f"Aborting job run because {partition_count} partitions "
                     f"is greater than the max allowed by this job ({MAX_PARTITIONS})"
                 )
                 logger.fatal(fail_msg)
                 raise RuntimeError(fail_msg)
             else:
-                date_df = spark.read.jdbc(
-                    url=jdbc_url,
-                    table=f"(select distinct {partitioning_col} from {table}) distinct_dates",
-                    properties=conn_props,
-                )
-                partition_sql_predicates = [f"{partitioning_col} = '{str(row[0])}'" for row in date_df.collect()]
+                distinct_dates_sql = f"(select distinct {partitioning_col} from {table}) distinct_dates"
+                if db_type == "postgres":
+                    date_df = spark.read.jdbc(
+                        url=jdbc_url,
+                        table=distinct_dates_sql,
+                        properties=conn_props,
+                    )
+                else:
+                    date_df = spark.sql(distinct_dates_sql)
+                partitions = [row[0] for row in date_df.collect()]
+                partition_sql_predicates = [f"{partitioning_col} = '{str(partition)}'" for partition in partitions]
                 logger.info(
                     f"Built {len(partition_sql_predicates)} SQL partition predicates "
                     f"to yield data partitions, based on distinct values of {partitioning_col} "
                 )
 
-                data_df = spark.read.jdbc(
-                    url=jdbc_url,
-                    table=table,
-                    predicates=partition_sql_predicates,
-                    properties=conn_props,
-                )
+                partition_args = {
+                    "predicates": partition_sql_predicates,
+                }
         else:
             # Getting a partition for each date in the range of dates from min to max, inclusive
             logger.info(
-                f"Derived {partitions} partitions from min ({min_val}) to max ({max_val}) date range "
-                f"across column: {partitioning_col}, with data for {(count / partitions):.1%} of those dates"
+                f"Derived {partition_count} partitions from min ({min_val}) to max ({max_val}) date range "
+                f"across column: {partitioning_col}, with data for {(count / partition_count):.1%} of those dates"
             )
-            if partitions > MAX_PARTITIONS:
+            if partition_count > MAX_PARTITIONS:
                 fail_msg = (
-                    f"Aborting job run because {partitions} partitions "
+                    f"Aborting job run because {partition_count} partitions "
                     f"is greater than the max allowed by this job ({MAX_PARTITIONS})"
                 )
                 logger.fatal(fail_msg)
@@ -129,25 +140,22 @@ def extract_db_data_frame(
                 # TODO: THIS DOES NOT SEEM TO WORK WITH DATES for lowerBound and upperBound. Forcing use of predicates
                 raise NotImplementedError("Cannot read JDBC partitions with date lower/upper bound")
 
-                data_df = spark.read.jdbc(
-                    url=jdbc_url,
-                    table=table,
-                    column=partitioning_col,
-                    lowerBound=min_val,
-                    upperBound=max_val,
-                    numPartitions=partitions,
-                    properties=conn_props,
-                )
+                partition_args = {
+                    "column": partitioning_col,
+                    "lowerBound": min_val,
+                    "upperBound": max_val,
+                    "numPartitions": partitions,
+                }
     else:
         logger.info(f"Deriving partitions from dates in column: {partitioning_col}")
-        partitions = int(count / (partition_rows + 1))
+        partition_count = int(count / (partition_rows + 1))
         logger.info(
-            f"Derived {partitions} partitions from {count} distinct non-numeric (text) "
+            f"Derived {partition_count} partitions from {count} distinct non-numeric (text) "
             f"values in column: {partitioning_col}."
         )
-        if partitions > MAX_PARTITIONS:
+        if partition_count > MAX_PARTITIONS:
             fail_msg = (
-                f"Aborting job run because {partitions} partitions "
+                f"Aborting job run because {partition_count} partitions "
                 f"is greater than the max allowed by this job ({MAX_PARTITIONS})"
             )
             logger.fatal(fail_msg)
@@ -156,19 +164,17 @@ def extract_db_data_frame(
         # SQL usable in Postgres to get a distinct 32-bit int from an md5 hash of text
         pg_int_from_hash = f"('x'||substr(md5({partitioning_col}::text),1,8))::bit(32)::int"
         # int could be signed. This workaround SQL gets unsigned modulus from the hash int
-        non_neg_modulo = f"mod({partitions} + mod({pg_int_from_hash}, {partitions}), {partitions})"
-        partition_sql_predicates = [f"{non_neg_modulo} = {p}" for p in range(0, partitions)]
+        non_neg_modulo = f"mod({partition_count} + mod({pg_int_from_hash}, {partition_count}), {partition_count})"
+        partitions = list(range(0, partition_count))
+        partition_sql_predicates = [f"{non_neg_modulo} = {p}" for p in partitions]
 
-        logger.info(f"{partitions} partitions to extract by predicates at approximately {partition_rows} rows each.")
-
-        data_df = spark.read.jdbc(
-            url=jdbc_url,
-            table=table,
-            predicates=partition_sql_predicates,
-            properties=conn_props,
+        logger.info(
+            f"{partition_count} partitions to extract by predicates at approximately {partition_rows} rows each."
         )
 
-    return data_df
+        partition_args = {"predicates": partition_sql_predicates}
+
+    return partitions, min_val, max_val, partition_args
 
 
 def get_partition_bounds_sql(
