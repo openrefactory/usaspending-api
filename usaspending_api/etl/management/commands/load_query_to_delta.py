@@ -23,13 +23,13 @@ from usaspending_api.transactions.delta_models import (
 )
 
 TABLE_SPEC = {
-    "transaction_search": {
+    "transaction_search_tiny": {
         "model": TransactionSearch,
         "source_query": transaction_search_load_sql_string,
         "source_database": None,
         "source_table": None,
         "destination_database": "rpt",
-        "swap_table": "transaction_search",
+        "swap_table": "transaction_search_tiny",
         "swap_schema": "rpt",
         "partition_column": "transaction_id",
         "delta_table_create_sql": transaction_search_create_sql_string,
