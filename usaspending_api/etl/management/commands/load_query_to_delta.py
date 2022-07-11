@@ -29,7 +29,7 @@ TABLE_SPEC = {
         "source_database": None,
         "source_table": None,
         "destination_database": "rpt",
-        "swap_table": "transaction_search_tiny",
+        "swap_table": "transaction_search",
         "swap_schema": "rpt",
         "partition_column": "transaction_id",
         "delta_table_create_sql": transaction_search_create_sql_string,
