@@ -239,6 +239,11 @@ class Command(BaseCommand):
         # Read from Delta
         df = spark.table(delta_table)
 
+        # shrink it
+        df_1 = df.filter(df['federal_accounts'].isNotNull() & df['recipient_hash'].isNotNull()).limit(1000)
+        df_2 = df.filter(df['federal_accounts'].isNull() & df['recipient_hash'].isNull()).limit(1000)
+        df = df_1.union(df_2)
+
         # Make sure that the column order defined in the Delta table schema matches
         # that of the Spark dataframe used to pull from the Postgres table. While not
         # always needed, this should help to prevent any future mismatch between the two.
