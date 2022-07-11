@@ -23,7 +23,7 @@ from usaspending_api.transactions.delta_models import (
 )
 
 TABLE_SPEC = {
-    "transaction_search_tiny": {
+    "transaction_search": {
         "model": TransactionSearch,
         "source_query": transaction_search_load_sql_string,
         "source_database": None,

@@ -163,7 +163,7 @@ TABLE_SPEC = {
     # Additional definitions for use in testing;
     # These are copies of Views / Materialized Views / Tables from Postgres to Spark to aid in
     # data comparison between current Postgres data and the data transformed via Spark.
-    "transaction_search_tiny_testing": {
+    "transaction_search_testing": {
         "model": TransactionSearch,
         "source_table": "transaction_search_tiny",
         "source_database": None,
