@@ -117,6 +117,22 @@ transaction_search_load_sql_string = fr"""
         {",".join([col for col in TRANSACTION_SEARCH_DELTA_COLUMNS])}
     )
     SELECT
+        /*+ BROADCAST(
+            agency,
+            federal_account,
+            naics,
+            office,
+            psc,
+            ref_city_county_state_code,
+            ref_country_code,
+            ref_population_county,
+            ref_population_cong_district,
+            references_cfda,
+            state_data,
+            subtier_agency,
+            toptier_agency,
+            treasury_appropriation_account
+        ) */
         transaction_normalized.id AS transaction_id,
         transaction_normalized.award_id,
         transaction_normalized.modification_number,
