@@ -118,6 +118,13 @@ class Command(BaseCommand):
                 spark.udf.register(**udf_args)
 
         create_ref_temp_views(spark)
+        spark.sql("SELECT * FROM raw.transaction_normalized")
+        spark.sql("SELECT * FROM raw.transaction_fpds")
+        spark.sql("SELECT * FROM raw.transaction_fabs")
+        spark.sql("SELECT * FROM raw.awards")
+        spark.sql("SELECT * FROM raw.recipient_lookup")
+        spark.sql("SELECT * FROM raw.recipient_profile")
+        spark.sql("SELECT * FROM raw.financial_accounts_by_awards")
         spark.sql(
             TABLE_SPEC[destination_table]
             .get("source_query")
