@@ -89,7 +89,7 @@ class Command(BaseCommand):
             "spark.sql.legacy.parquet.datetimeRebaseModeInWrite": "LEGACY",  # for dates at/before 1900
             "spark.sql.legacy.parquet.int96RebaseModeInWrite": "LEGACY",  # for timestamps at/before 1900
             # For performance
-            "spark.sql.files.maxPartitionBytes": "268435456",  # 256MB; default is 128MB
+            "spark.sql.files.maxPartitionBytes": "536870912",  # 512MB; default is 128MB
         }
 
         spark = get_active_spark_session()
