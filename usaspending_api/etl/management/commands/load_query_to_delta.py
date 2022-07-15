@@ -89,7 +89,7 @@ class Command(BaseCommand):
             "spark.sql.legacy.parquet.datetimeRebaseModeInWrite": "LEGACY",  # for dates at/before 1900
             "spark.sql.legacy.parquet.int96RebaseModeInWrite": "LEGACY",  # for timestamps at/before 1900
             # For performance
-            "spark.sql.files.maxPartitionBytes": "1073741824",  # 1GB; default is 128MB
+            "spark.sql.files.maxPartitionBytes": "2147483648",  # 2GB; default is 128MB
         }
 
         spark = get_active_spark_session()
@@ -118,13 +118,6 @@ class Command(BaseCommand):
                 spark.udf.register(**udf_args)
 
         create_ref_temp_views(spark)
-        spark.sql("SELECT * FROM raw.transaction_normalized")
-        spark.sql("SELECT * FROM raw.transaction_fpds")
-        spark.sql("SELECT * FROM raw.transaction_fabs")
-        spark.sql("SELECT * FROM raw.awards")
-        spark.sql("SELECT * FROM raw.recipient_lookup")
-        spark.sql("SELECT * FROM raw.recipient_profile")
-        spark.sql("SELECT * FROM raw.financial_accounts_by_awards")
         spark.sql(
             TABLE_SPEC[destination_table]
             .get("source_query")
