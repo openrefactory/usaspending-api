@@ -88,6 +88,8 @@ class Command(BaseCommand):
             # See comment below about old date and time values cannot parsed without these
             "spark.sql.legacy.parquet.datetimeRebaseModeInWrite": "LEGACY",  # for dates at/before 1900
             "spark.sql.legacy.parquet.int96RebaseModeInWrite": "LEGACY",  # for timestamps at/before 1900
+            # For performance
+            "spark.sql.files.maxPartitionBytes": "268435456",  # 256MB; default is 128MB
         }
 
         spark = get_active_spark_session()
