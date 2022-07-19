@@ -6,7 +6,7 @@ from uuid import uuid4
 
 TEMPLATE = {
     "create_matview": "CREATE MATERIALIZED VIEW {} AS\n{} WITH {}DATA;",
-    "create_table": "CREATE TABLE {} AS SELECT * from {} WITH NO DATA;",
+    "create_table": "CREATE UNLOGGED TABLE {} WITH (autovacuum_enabled=FALSE) AS SELECT * from {} WITH NO DATA;",
     "drop_table": "DROP TABLE IF EXISTS {} CASCADE;",
     "drop_matview": "DROP MATERIALIZED VIEW IF EXISTS {} CASCADE;",
     "rename_matview": "ALTER MATERIALIZED VIEW {}{} RENAME TO {};",
