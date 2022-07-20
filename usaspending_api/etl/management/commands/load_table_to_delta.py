@@ -165,7 +165,7 @@ TABLE_SPEC = {
     # data comparison between current Postgres data and the data transformed via Spark.
     "transaction_search_testing": {
         "model": TransactionSearch,
-        "source_table": "transaction_search",
+        "source_table": "transaction_search_old",
         "source_database": None,
         "destination_database": "test",
         "swap_table": None,
