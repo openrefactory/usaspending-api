@@ -35,11 +35,7 @@ from usaspending_api.recipient.delta_models import (
     sam_recipient_sql_string,
 )
 from usaspending_api.recipient.models import DUNS, RecipientLookup, RecipientProfile
-from usaspending_api.search.models import (
-    TransactionSearch,
-    AwardSearch,
-    SubawardSearchTesting
-)
+from usaspending_api.search.models import TransactionSearch, AwardSearch, SubawardSearchTesting
 from usaspending_api.search.delta_models import (
     award_search_create_sql_string,
     AWARD_SEARCH_COLUMNS,

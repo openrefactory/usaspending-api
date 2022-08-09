@@ -631,7 +631,9 @@ class SubawardSearchTesting(models.Model):
     funding_subtier_agency_name = models.TextField(null=True, blank=True)
     funding_subtier_agency_abbreviation = models.TextField(null=True, blank=True)
 
-    cfda = models.ForeignKey("references.Cfda", models.DO_NOTHING, related_name="related_subawardsearchtesting", null=True)
+    cfda = models.ForeignKey(
+        "references.Cfda", models.DO_NOTHING, related_name="related_subawardsearchtesting", null=True
+    )
     cfda_number = models.TextField(null=True, blank=True)
     cfda_title = models.TextField(null=True, blank=True)
 

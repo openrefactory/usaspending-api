@@ -19,7 +19,7 @@ from usaspending_api.common.matview_manager import (
     MATVIEW_GENERATOR_FILE,
     CHUNKED_MATVIEW_GENERATOR_FILE,
     OVERLAY_VIEWS,
-    POST_VIEWS
+    POST_VIEWS,
 )
 from usaspending_api.common.helpers.sql_helpers import get_database_dsn_string
 
