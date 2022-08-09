@@ -77,7 +77,7 @@ CHUNKED_MATERIALIZED_VIEWS = OrderedDict(
 POST_VIEWS = OrderedDict(
     [
         (
-            "subaward_view_testing",
+            "subaward_search_testing",
             {
                 "model": mv.SubawardSearchTesting,
                 "json_filepath": str(JSON_DIR / "subaward_search_testing.json"),
