@@ -67,7 +67,7 @@
     "    bs.subaward_report_year::SMALLINT,",
     "    bs.subaward_report_month::SMALLINT,",
     "    UPPER(bs.subaward_number) AS subaward_number,",
-    "    bv.amount AS subaward_amount,",
+    "    sv.amount AS subaward_amount,",
     "    bs.sub_action_date::DATE,",
     "    UPPER(bs.sub_awardee_or_recipient_uniqu) AS sub_awardee_or_recipient_uniqu,",
     "    UPPER(bs.sub_awardee_or_recipient_uei) AS sub_awardee_or_recipient_uei,",
