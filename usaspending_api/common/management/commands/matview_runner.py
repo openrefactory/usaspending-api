@@ -37,8 +37,14 @@ class Command(BaseCommand):
         if args["only"]:
             if args["only"] == "none":
                 self.matviews = {}
+                self.post_matviews = {}
             else:
-                self.matviews = {args["only"]: MATERIALIZED_VIEWS[args["only"]]}
+                if args["only"] in MATERIALIZED_VIEWS:
+                    self.matviews = {args["only"]: MATERIALIZED_VIEWS[args["only"]]}
+                    self.post_matviews = {}
+                elif args["only"] in POST_VIEWS:
+                    self.matviews = {}
+                    self.post_matviews = {args["only"]: POST_VIEWS[args["only"]]}
         self.matview_dir = args["temp_dir"]
         self.matview_chunked_dir = args["temp_chunked_dir"]
         self.no_cleanup = args["leave_sql"]
@@ -51,7 +57,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--only",
-            choices=list(MATERIALIZED_VIEWS.keys()) + ["none"],
+            choices=list(MATERIALIZED_VIEWS.keys()) + list(POST_VIEWS.keys()) + ["none"],
             help="If matviews are listed with this option, only those matviews will be run. 'none' will result in no matviews being run",
         )
         parser.add_argument(
