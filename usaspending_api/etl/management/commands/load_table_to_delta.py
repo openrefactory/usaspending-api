@@ -218,7 +218,7 @@ TABLE_SPEC = {
         "destination_database": "rpt",
         "swap_table": None,
         "swap_schema": None,
-        "partition_column": "subaward_id",
+        "partition_column": "broker_subaward_id",
         "partition_column_type": "numeric",
         "delta_table_create_sql": subaward_search_create_sql_string,
         "source_schema": None,
