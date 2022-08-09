@@ -73,3 +73,16 @@ CHUNKED_MATERIALIZED_VIEWS = OrderedDict(
         ),
     ]
 )
+# TODO: Remove when SubawardSearch has been incorporated
+POST_VIEWS = OrderedDict(
+    [
+        (
+            "subaward_view_testing",
+            {
+                "model": mv.SubawardSearchTesting,
+                "json_filepath": str(JSON_DIR / "subaward_search_testing.json"),
+                "sql_filename": "subaward_search_testing.sql",
+            },
+        ),
+    ]
+)

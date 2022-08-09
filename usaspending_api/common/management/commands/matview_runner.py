@@ -19,6 +19,7 @@ from usaspending_api.common.matview_manager import (
     MATVIEW_GENERATOR_FILE,
     CHUNKED_MATVIEW_GENERATOR_FILE,
     OVERLAY_VIEWS,
+    POST_VIEWS
 )
 from usaspending_api.common.helpers.sql_helpers import get_database_dsn_string
 
@@ -32,6 +33,7 @@ class Command(BaseCommand):
     def faux_init(self, args):
         self.matviews = MATERIALIZED_VIEWS
         self.chunked_matviews = CHUNKED_MATERIALIZED_VIEWS
+        self.post_matviews = POST_VIEWS
         if args["only"]:
             if args["only"] == "none":
                 self.matviews = {}
@@ -155,6 +157,15 @@ class Command(BaseCommand):
         if len(tasks) > 0:
             loop.run_until_complete(asyncio.gather(*tasks))
 
+        loop.close()
+
+        loop = asyncio.new_event_loop()
+        tasks = []
+        for matview, config in self.post_matviews.items():
+            sql = (self.matview_dir / config["sql_filename"]).read_text()
+            tasks.append(asyncio.ensure_future(async_run_creates(sql, wrapper=Timer(matview)), loop=loop))
+        if len(tasks) > 0:
+            loop.run_until_complete(asyncio.gather(*tasks))
         loop.close()
 
         if "transaction_search" in self.chunked_matviews and self.include_chunked_matviews:

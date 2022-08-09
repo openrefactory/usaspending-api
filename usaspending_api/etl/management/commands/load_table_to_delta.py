@@ -9,6 +9,13 @@ from usaspending_api.awards.delta_models import (
     BROKER_SUBAWARDS_COLUMNS,
     broker_subawards_sql_string,
 )
+from usaspending_api.awards.models import (
+    Award,
+    FinancialAccountsByAwards,
+    TransactionFABS,
+    TransactionFPDS,
+    TransactionNormalized,
+)
 from usaspending_api.common.etl.spark import extract_db_data_frame, get_partition_bounds_sql, load_delta_table
 from usaspending_api.common.helpers.spark_helpers import (
     configure_spark_session,
@@ -27,7 +34,18 @@ from usaspending_api.recipient.delta_models import (
     SAM_RECIPIENT_COLUMNS,
     sam_recipient_sql_string,
 )
-from usaspending_api.search.models import TransactionSearch, AwardSearch
+from usaspending_api.recipient.models import DUNS, RecipientLookup, RecipientProfile
+from usaspending_api.search.models import (
+    TransactionSearch,
+    AwardSearch,
+    SubawardSearchTesting
+)
+from usaspending_api.search.delta_models import (
+    award_search_create_sql_string,
+    AWARD_SEARCH_COLUMNS,
+    subaward_search_create_sql_string,
+    SUBAWARD_SEARCH_COLUMNS,
+)
 from usaspending_api.transactions.delta_models import (
     TRANSACTION_FABS_COLUMNS,
     transaction_fabs_sql_string,
@@ -38,17 +56,6 @@ from usaspending_api.transactions.delta_models import (
     TRANSACTION_SEARCH_COLUMNS,
     transaction_search_create_sql_string,
 )
-from usaspending_api.search.delta_models.award_search import award_search_create_sql_string, AWARD_SEARCH_COLUMNS
-
-from usaspending_api.recipient.models import DUNS, RecipientLookup, RecipientProfile
-from usaspending_api.awards.models import (
-    Award,
-    FinancialAccountsByAwards,
-    TransactionFABS,
-    TransactionFPDS,
-    TransactionNormalized,
-)
-
 
 TABLE_SPEC = {
     "awards": {
@@ -204,6 +211,23 @@ TABLE_SPEC = {
         "custom_schema": "total_covid_outlay NUMERIC(23,2), total_covid_obligation NUMERIC(23,2), recipient_hash "
         "STRING, federal_accounts STRING, cfdas ARRAY<STRING>, tas_components ARRAY<STRING>",
         "column_names": list(AWARD_SEARCH_COLUMNS),
+    },
+    # Note: This is *just* for comparing older subaward data with the newer subaward_search data
+    # TODO: Remove, or update to be based on SubawardSearch model, when subaward_search has been fully incorporated
+    "subaward_search_testing": {
+        "model": SubawardSearchTesting,
+        "is_from_broker": False,
+        "source_table": "subaward_search_testing",
+        "source_database": "rpt",
+        "destination_database": "rpt",
+        "swap_table": None,
+        "swap_schema": None,
+        "partition_column": "subaward_id",
+        "partition_column_type": "numeric",
+        "delta_table_create_sql": subaward_search_create_sql_string,
+        "source_schema": None,
+        "custom_schema": "",
+        "column_names": list(SUBAWARD_SEARCH_COLUMNS),
     },
     # Tables loaded in from the Broker
     "broker_subaward": {
