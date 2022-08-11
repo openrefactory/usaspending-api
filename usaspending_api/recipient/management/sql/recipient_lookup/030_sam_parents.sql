@@ -28,5 +28,5 @@ SELECT
   ultimate_parent_uei AS parent_uei
 FROM duns
 WHERE COALESCE(ultimate_parent_uei, ultimate_parent_unique_ide) IS NOT NULL AND ultimate_parent_legal_enti IS NOT NULL
-ORDER BY ultimate_parent_unique_ide, ultimate_parent_uei, update_date DESC
+ORDER BY ultimate_parent_uei, ultimate_parent_unique_ide, update_date DESC
 ON CONFLICT (recipient_hash) DO NOTHING;
