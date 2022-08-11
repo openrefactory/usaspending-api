@@ -117,17 +117,18 @@ recipient_lookup_load_sql_string_list = [
     # -----
     # Creation of the temporary table that is used to stage and merge updates to recipient_lookup
     # -----
-    rf"""
-    CREATE OR REPLACE TABLE temp.temporary_restock_recipient_lookup (
-        {", ".join([f'{key} {val}' for key, val in TEMP_RECIPIENT_LOOKUP_COLUMNS.items()])}
-    )
-    USING DELTA
-    LOCATION 's3a://{{SPARK_S3_BUCKET}}/{{DELTA_LAKE_S3_PATH}}/temp/temporary_restock_recipient_lookup'
-    """,
+    # rf"""
+    # CREATE OR REPLACE TABLE temp.temporary_restock_recipient_lookup (
+    #     {", ".join([f'{key} {val}' for key, val in TEMP_RECIPIENT_LOOKUP_COLUMNS.items()])}
+    # )
+    # USING DELTA
+    # LOCATION 's3a://{{SPARK_S3_BUCKET}}/{{DELTA_LAKE_S3_PATH}}/temp/temporary_restock_recipient_lookup'
+    # """,
     # -----
     # Populate the temporary_restock_recipient_lookup table
     # -----
     r"""
+    CREATE TEMP VIEW temporary_restock_recipient_lookup AS (
     WITH latest_duns_sam AS (
         SELECT
             1 AS priority,
@@ -447,29 +448,30 @@ recipient_lookup_load_sql_string_list = [
             ) AS row_num_union
         FROM union_all
     )
-    INSERT INTO temp.temporary_restock_recipient_lookup (
-        recipient_hash,
-        duns_recipient_hash,
-        legal_business_name,
-        duns,
-        uei,
-        address_line_1,
-        address_line_2,
-        business_types_codes,
-        city,
-        congressional_district,
-        country_code,
-        parent_duns,
-        parent_legal_business_name,
-        parent_uei,
-        state,
-        zip4,
-        zip5,
-        alternate_names,
-        source,
-        update_date,
-        row_num_union
-    )
+    
+    --INSERT INTO temp.temporary_restock_recipient_lookup (
+    --    recipient_hash,
+    --    duns_recipient_hash,
+    --    legal_business_name,
+    --    duns,
+    --    uei,
+    --    address_line_1,
+    --    address_line_2,
+    --    business_types_codes,
+    --    city,
+    --    congressional_district,
+    --    country_code,
+    --    parent_duns,
+    --    parent_legal_business_name,
+    --    parent_uei,
+    --    state,
+    --    zip4,
+    --    zip5,
+    --    alternate_names,
+    --    source,
+    --    update_date,
+    --    row_num_union
+    --)
     SELECT
         recipient_hash,
         duns_recipient_hash,
@@ -494,31 +496,61 @@ recipient_lookup_load_sql_string_list = [
         row_num_union
     FROM union_all_priority
     WHERE row_num_union = 1
-    """,
+    )""",
     # -----
     # Delete any cases of old recipients from where the recipient now has a UEI
     # -----
     r"""
-    MERGE INTO temp.temporary_restock_recipient_lookup AS temp_rl
-    USING (
+    CREATE TEMP VIEW step_1 AS (
+    --MERGE INTO temp.temporary_restock_recipient_lookup AS temp_rl
+    --USING (
+    WITH using_temp_rl AS (
         SELECT duns_recipient_hash
         FROM temp.temporary_restock_recipient_lookup
         WHERE
             uei IS NOT NULL
             AND duns IS NOT NULL
-    ) AS using_temp_rl
+    )
+    --) AS using_temp_rl
+    SELECT
+        temp_rl.recipient_hash,
+        temp_rl.duns_recipient_hash,
+        temp_rl.legal_business_name,
+        temp_rl.duns,
+        temp_rl.uei,
+        temp_rl.address_line_1,
+        temp_rl.address_line_2,
+        temp_rl.business_types_codes,
+        temp_rl.city,
+        temp_rl.congressional_district,
+        temp_rl.country_code,
+        temp_rl.parent_duns,
+        temp_rl.parent_legal_business_name,
+        temp_rl.parent_uei,
+        temp_rl.state,
+        temp_rl.zip4,
+        temp_rl.zip5,
+        temp_rl.alternate_names,
+        temp_rl.source,
+        temp_rl.update_date,
+        temp_rl.row_num_union
+    FROM temp_rl
+    LEFT JOIN using_temp_rl
     ON
         temp_rl.recipient_hash = using_temp_rl.duns_recipient_hash
         AND temp_rl.uei IS NULL
-    WHEN MATCHED
-    THEN DELETE
-    """,
+    WHERE using_temp_rl.duns_recipient_hash IS NULL -- keep all original data that DOES NOT MATCH, aka "WHEN MATCHED THEN DELETE"
+    --WHEN MATCHED
+    --THEN DELETE
+    )""",
     # -----
     # Update the temporary_restock_recipient_lookup table to include any alternate names
     # -----
     r"""
-    MERGE INTO temp.temporary_restock_recipient_lookup temp_rl
-    USING (
+    CREATE TEMP VIEW step_2 AS (
+    --MERGE INTO temp.temporary_restock_recipient_lookup temp_rl
+    --USING (
+    WITH outer_alt_names AS (
         WITH alt_names AS (
             SELECT
                 recipient_hash,
@@ -543,11 +575,39 @@ recipient_lookup_load_sql_string_list = [
              )AS all_names
         FROM alt_names AS an
         FULL OUTER JOIN alt_parent_names AS apn ON an.recipient_hash = apn.recipient_hash
-    ) AS alt_names
-    ON temp_rl.recipient_hash = alt_names.recipient_hash AND row_num_union = 1
-    WHEN MATCHED
-    AND temp_rl.alternate_names IS DISTINCT FROM ARRAY_REMOVE(alt_names.all_names, COALESCE(temp_rl.legal_business_name, ''))
-    THEN UPDATE SET temp_rl.alternate_names = COALESCE(ARRAY_REMOVE(alt_names.all_names, COALESCE(temp_rl.legal_business_name, '')), ARRAY())
+    --) AS alt_names
+    SELECT
+        temp_rl.recipient_hash,
+        temp_rl.duns_recipient_hash,
+        temp_rl.legal_business_name,
+        temp_rl.duns,
+        temp_rl.uei,
+        temp_rl.address_line_1,
+        temp_rl.address_line_2,
+        temp_rl.business_types_codes,
+        temp_rl.city,
+        temp_rl.congressional_district,
+        temp_rl.country_code,
+        temp_rl.parent_duns,
+        temp_rl.parent_legal_business_name,
+        temp_rl.parent_uei,
+        temp_rl.state,
+        temp_rl.zip4,
+        temp_rl.zip5,
+        CASE
+            WHEN outer_alt_names.recipient_hash IS NOT NULL 
+            THEN COALESCE(ARRAY_REMOVE(outer_alt_names.all_names, COALESCE(temp_rl.legal_business_name, '')), ARRAY())
+            ELSE temp_rl.alternate_names
+        END AS alternate_names,
+        temp_rl.source,
+        temp_rl.update_date,
+        temp_rl.row_num_union
+    FROM step_1 AS temp_rl
+    LEFT JOIN outer_alt_names
+    ON temp_rl.recipient_hash = outer_alt_names.recipient_hash AND temp_rl.row_num_union = 1
+    --WHEN MATCHED
+    AND temp_rl.alternate_names IS DISTINCT FROM ARRAY_REMOVE(outer_alt_names.all_names, COALESCE(temp_rl.legal_business_name, ''))
+    --THEN UPDATE SET temp_rl.alternate_names = COALESCE(ARRAY_REMOVE(alt_names.all_names, COALESCE(temp_rl.legal_business_name, '')), ARRAY())
     """,
     # -----
     # Insert the temporary_restock_recipient_lookup table into recipient_lookup
@@ -560,17 +620,18 @@ recipient_lookup_load_sql_string_list = [
     SELECT
         {",".join([col for col in RECIPIENT_LOOKUP_COLUMNS_WITHOUT_ID])}
     FROM
-        temp.temporary_restock_recipient_lookup
+        --temp.temporary_restock_recipient_lookup
+        step_2
     """,
     # -----
     # Cleanup the temporary table and views
     # -----
-    r"""
-    DELETE FROM temp.temporary_restock_recipient_lookup
-    """,
-    r"""
-    DROP TABLE temp.temporary_restock_recipient_lookup
-    """,
+    # r"""
+    # DELETE FROM temp.temporary_restock_recipient_lookup
+    # """,
+    # r"""
+    # DROP TABLE temp.temporary_restock_recipient_lookup
+    # """,
     r"""
     DROP VIEW temporary_transaction_recipients_view
     """,
