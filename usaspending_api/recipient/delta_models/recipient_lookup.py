@@ -506,7 +506,7 @@ recipient_lookup_load_sql_string_list = [
     --USING (
     WITH using_temp_rl AS (
         SELECT duns_recipient_hash
-        FROM temp.temporary_restock_recipient_lookup
+        FROM temporary_restock_recipient_lookup
         WHERE
             uei IS NOT NULL
             AND duns IS NOT NULL
@@ -534,7 +534,7 @@ recipient_lookup_load_sql_string_list = [
         temp_rl.source,
         temp_rl.update_date,
         temp_rl.row_num_union
-    FROM temp_rl
+    FROM temporary_restock_recipient_lookup AS temp_rl
     LEFT JOIN using_temp_rl
     ON
         temp_rl.recipient_hash = using_temp_rl.duns_recipient_hash
@@ -576,6 +576,7 @@ recipient_lookup_load_sql_string_list = [
         FROM alt_names AS an
         FULL OUTER JOIN alt_parent_names AS apn ON an.recipient_hash = apn.recipient_hash
     --) AS alt_names
+    )
     SELECT
         temp_rl.recipient_hash,
         temp_rl.duns_recipient_hash,
@@ -608,7 +609,7 @@ recipient_lookup_load_sql_string_list = [
     --WHEN MATCHED
     AND temp_rl.alternate_names IS DISTINCT FROM ARRAY_REMOVE(outer_alt_names.all_names, COALESCE(temp_rl.legal_business_name, ''))
     --THEN UPDATE SET temp_rl.alternate_names = COALESCE(ARRAY_REMOVE(alt_names.all_names, COALESCE(temp_rl.legal_business_name, '')), ARRAY())
-    """,
+    )""",
     # -----
     # Insert the temporary_restock_recipient_lookup table into recipient_lookup
     # -----
