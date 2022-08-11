@@ -76,7 +76,7 @@ recipient_profile_load_sql_strings = [
     # --------------------------------------------------------------------------------
     f"""
         --INSERT INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} (
-        CREATE OR REPLACE TEMPORARY VIEW step_2 AS (
+        CREATE OR REPLACE TEMPORARY VIEW step_N /* 2 */ AS (
             SELECT
                 'P' as recipient_level,
                 recipient_hash AS recipient_hash,
@@ -144,7 +144,7 @@ recipient_profile_load_sql_strings = [
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv
     --USING grouped_by_category AS gbc
-    CREATE TEMP VIEW step_3 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 3 */ AS (
     
     WITH grouped_by_category AS (
         WITH grouped_by_category_inner AS (
@@ -204,7 +204,7 @@ recipient_profile_load_sql_strings = [
             WHEN gbc.recipient_hash IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id 
-    FROM step_2 AS rpv
+    FROM step_N /* 2 */ AS rpv
     LEFT OUTER JOIN grouped_by_category AS gbc 
     ON gbc.recipient_hash = rpv.recipient_hash AND
         gbc.recipient_level = rpv.recipient_level
@@ -224,7 +224,7 @@ recipient_profile_load_sql_strings = [
     # --------------------------------------------------------------------------------
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv USING  grouped_by_parent AS gbp
-    CREATE TEMP VIEW step_4 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 4 */ AS (
     
     WITH grouped_by_parent AS (
         WITH grouped_by_parent_inner AS (
@@ -283,7 +283,7 @@ recipient_profile_load_sql_strings = [
             WHEN gbp.uei IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id 
-    FROM step_3 AS rpv
+    FROM step_N /* 3 */ AS rpv
     LEFT OUTER JOIN grouped_by_parent AS gbp 
     ON rpv.uei = gbp.uei AND
         rpv.recipient_level = 'P'
@@ -304,7 +304,7 @@ recipient_profile_load_sql_strings = [
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv
     --USING parent_recipients AS pr
-    CREATE TEMP VIEW step_5 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 5 */ AS (
     
     WITH parent_recipients AS (
         SELECT
@@ -338,7 +338,7 @@ recipient_profile_load_sql_strings = [
             WHEN pr.parent_uei IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id    
-    FROM step_4 AS rpv
+    FROM step_N /* 4 */ AS rpv
     LEFT OUTER JOIN parent_recipients AS pr 
     ON rpv.uei = pr.parent_uei and rpv.recipient_level = 'P'
     --WHEN MATCHED THEN UPDATE SET
@@ -351,7 +351,7 @@ recipient_profile_load_sql_strings = [
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv
     --USING all_recipients AS ar
-    CREATE TEMP VIEW step_6 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 6 */ AS (
     
     WITH all_recipients AS (
         SELECT
@@ -385,7 +385,7 @@ recipient_profile_load_sql_strings = [
             WHEN ar.uei IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id  
-    FROM step_5 AS rpv
+    FROM step_N /* 5 */ AS rpv
     LEFT OUTER JOIN all_recipients AS ar 
     ON rpv.uei = ar.uei AND
         rpv.recipient_level = 'C'
@@ -399,7 +399,7 @@ recipient_profile_load_sql_strings = [
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv
     --USING grouped_by_old_recipients AS gbc
-    CREATE TEMP VIEW step_7 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 7 */ AS (
     
     WITH grouped_by_old_recipients AS (
         SELECT
@@ -430,7 +430,7 @@ recipient_profile_load_sql_strings = [
             WHEN gbc.recipient_hash IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id
-    FROM step_6 AS rpv
+    FROM step_N /* 6 */ AS rpv
     LEFT OUTER JOIN grouped_by_old_recipients AS gbc 
     ON gbc.recipient_hash = rpv.recipient_hash AND
         gbc.recipient_level = rpv.recipient_level AND
@@ -444,7 +444,7 @@ recipient_profile_load_sql_strings = [
     f"""
     --MERGE INTO {{DESTINATION_DATABASE}}.{{DESTINATION_TABLE}} AS rpv
     --USING grouped_by_parent_old AS gbp
-    CREATE TEMP VIEW step_8 AS (
+    CREATE OR REPLACE TEMP VIEW step_N /* 8 */ AS (
     
     WITH grouped_by_parent_old AS (
         SELECT
@@ -476,7 +476,7 @@ recipient_profile_load_sql_strings = [
             WHEN gbp.parent_uei IS NOT NULL THEN 1 -- WHEN "MATCHED"
             ELSE rpv.id
         END AS id
-    FROM step_7 AS rpv
+    FROM step_N /* 7 */ AS rpv
     LEFT OUTER JOIN grouped_by_parent_old AS gbp 
     ON rpv.uei = gbp.parent_uei AND
         rpv.recipient_level = 'P' AND
@@ -496,7 +496,7 @@ recipient_profile_load_sql_strings = [
         SELECT
             {",".join(list(RECIPIENT_PROFILE_COLUMNS))}
         FROM
-            step_8 AS rpv
+            step_N /* 8 */ AS rpv
         WHERE rpv.id != 0
     """,
     """DROP VIEW temporary_recipients_from_transactions_view;""",
