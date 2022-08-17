@@ -68,6 +68,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "",
         "column_names": list(AWARDS_COLUMNS),
+        "tsvectors": None,
     },
     "financial_accounts_by_awards": {
         "model": FinancialAccountsByAwards,
@@ -83,6 +84,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "award_id LONG",
         "column_names": list(FINANCIAL_ACCOUNTS_BY_AWARDS_COLUMNS),
+        "tsvectors": None,
     },
     "recipient_lookup": {
         "model": RecipientLookup,
@@ -98,6 +100,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "recipient_hash STRING",
         "column_names": list(RECIPIENT_LOOKUP_COLUMNS),
+        "tsvectors": None,
     },
     "recipient_profile": {
         "model": RecipientProfile,
@@ -113,6 +116,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "recipient_hash STRING",
         "column_names": list(RECIPIENT_PROFILE_COLUMNS),
+        "tsvectors": None,
     },
     "sam_recipient": {
         "model": DUNS,
@@ -128,6 +132,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "broker_duns_id INT, business_types_codes ARRAY<STRING>",
         "column_names": list(SAM_RECIPIENT_COLUMNS),
+        "tsvectors": None,
     },
     "transaction_fabs": {
         "model": TransactionFABS,
@@ -143,6 +148,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "",
         "column_names": list(TRANSACTION_FABS_COLUMNS),
+        "tsvectors": None,
     },
     "transaction_fpds": {
         "model": TransactionFPDS,
@@ -158,6 +164,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "",
         "column_names": list(TRANSACTION_FPDS_COLUMNS),
+        "tsvectors": None,
     },
     "transaction_normalized": {
         "model": TransactionNormalized,
@@ -173,6 +180,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "",
         "column_names": list(TRANSACTION_NORMALIZED_COLUMNS),
+        "tsvectors": None,
     },
     # Additional definitions for use in testing;
     # These are copies of Views / Materialized Views / Tables from Postgres to Spark to aid in
@@ -191,6 +199,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "recipient_hash STRING, federal_accounts STRING",
         "column_names": list(TRANSACTION_SEARCH_COLUMNS),
+        "tsvectors": None,
     },
     "award_search_testing": {
         "model": AwardSearch,
@@ -207,6 +216,7 @@ TABLE_SPEC = {
         "custom_schema": "total_covid_outlay NUMERIC(23,2), total_covid_obligation NUMERIC(23,2), recipient_hash "
         "STRING, federal_accounts STRING, cfdas ARRAY<STRING>, tas_components ARRAY<STRING>",
         "column_names": list(AWARD_SEARCH_COLUMNS),
+        "tsvectors": None,
     },
     # Note: This is *just* for comparing older subaward data with the newer subaward_search data
     # TODO: Remove, or update to be based on SubawardSearch model, when subaward_search has been fully incorporated
@@ -240,6 +250,7 @@ TABLE_SPEC = {
         "source_schema": None,
         "custom_schema": "",
         "column_names": list(BROKER_SUBAWARDS_COLUMNS),
+        "tsvectors": None,
     },
 }
 
