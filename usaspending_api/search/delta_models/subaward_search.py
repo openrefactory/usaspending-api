@@ -197,9 +197,9 @@ SUBAWARD_SEARCH_DELTA_COLUMNS = {k: v["delta"] for k, v in SUBAWARD_SEARCH_COLUM
 SUBAWARD_SEARCH_POSTGRES_COLUMNS = {k: v["postgres"] for k, v in SUBAWARD_SEARCH_COLUMNS.items()}
 
 SUBAWARD_SEARCH_POSTGRES_VECTORS = {
-    "keyword_ts_vector": ['sub_awardee_or_recipient_legal', 'product_or_service_description', 'subaward_description'],
-    "award_ts_vector": ['award_piid_fain', 'subaward_number'],
-    "recipient_name_ts_vector": ['sub_awardee_or_recipient_legal'],
+    "keyword_ts_vector": ["sub_awardee_or_recipient_legal", "product_or_service_description", "subaward_description"],
+    "award_ts_vector": ["award_piid_fain", "subaward_number"],
+    "recipient_name_ts_vector": ["sub_awardee_or_recipient_legal"],
 }
 SUBAWARD_SEARCH_POSTGRES_COLUMNS.update({col: "TSVECTOR" for col in SUBAWARD_SEARCH_POSTGRES_VECTORS})
 
@@ -542,10 +542,12 @@ subaward_search_load_sql_string = fr"""
                 AND rec.row_num = 1)
     LEFT OUTER JOIN
         global_temp.ref_country_code AS pcc
-            ON pcc.country_code = UPPER(bs.sub_place_of_perform_country_co)
+            ON (pcc.country_code = UPPER(bs.sub_place_of_perform_country_co)
+                AND bs.sub_place_of_perform_country_co IS NOT NULL)
     LEFT OUTER JOIN
         global_temp.ref_country_code AS rcc
-            ON rcc.country_code = UPPER(bs.sub_legal_entity_country_code)
+            ON (rcc.country_code = UPPER(bs.sub_legal_entity_country_code)
+                AND bs.sub_legal_entity_country_code IS NOT NULL)
     LEFT OUTER JOIN
         global_temp.psc
             ON fpds.product_or_service_code = psc.code
