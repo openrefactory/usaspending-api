@@ -91,6 +91,15 @@ AWARD_SEARCH_COLUMNS = {
     "covid_spending_by_defc": {"delta": "STRING", "postgres": "JSONB"},
     "total_covid_outlay": {"delta": "NUMERIC(23, 2)", "postgres": "NUMERIC(23, 2)"},
     "total_covid_obligation": {"delta": "NUMERIC(23, 2)", "postgres": "NUMERIC(23, 2)"},
+    "gross_outlay_by_award_net_of_refunds_cpe": {"delta": "NUMERIC(23, 2)", "postgres": "NUMERIC(23, 2)"},
+    "USSGL497200_downward_adj_of_prior_year_paid_deliv_orders_oblig": {
+        "delta": "NUMERIC(23, 2)",
+        "postgres": "NUMERIC(23, 2)",
+    },
+    "USSGL487200_downward_adj_prior_year_prepaid_undeliv_order_oblig": {
+        "delta": "NUMERIC(23, 2)",
+        "postgres": "NUMERIC(23, 2)",
+    },
 }
 AWARD_SEARCH_DELTA_COLUMNS = {k: v["delta"] for k, v in AWARD_SEARCH_COLUMNS.items()}
 AWARD_SEARCH_POSTGRES_COLUMNS = {k: v["postgres"] for k, v in AWARD_SEARCH_COLUMNS.items()}
@@ -255,7 +264,10 @@ award_search_load_sql_string = fr"""
   TREASURY_ACCT.disaster_emergency_fund_codes,
   DEFC.covid_spending_by_defc,
   DEFC.total_covid_outlay,
-  DEFC.total_covid_obligation
+  DEFC.total_covid_obligation,
+  OUT.gross_outlay_by_award_net_of_refunds_cpe,
+  OUT.USSGL497200_downward_adj_of_prior_year_paid_deliv_orders_oblig,
+  OUT.USSGL487200_downward_adj_prior_year_prepaid_undeliv_order_oblig
 FROM
   raw.awards
 INNER JOIN
@@ -417,6 +429,28 @@ LEFT OUTER JOIN (
     GROUP BY
         GROUPED_BY_DEFC.award_id
 ) DEFC on DEFC.award_id = awards.id
+LEFT OUTER JOIN (
+    SELECT
+        award_id,
+        SUM(
+            gross_outlay_amount_by_award_cpe +
+            ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe +
+            ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe
+        ) AS gross_outlay_by_award_net_of_refunds_cpe,
+        SUM(ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe) AS USSGL487200_downward_adj_prior_year_prepaid_undeliv_order_oblig,
+        SUM(ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe) AS USSGL497200_downward_adj_of_prior_year_paid_deliv_orders_oblig,
+        MIN(reporting_fiscal_year) AS reporting_fiscal_year
+    FROM (
+        SELECT
+            award_id,
+            gross_outlay_amount_by_award_cpe,
+            ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe,
+            ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe,
+            sa.reporting_fiscal_year AS reporting_fiscal_year
+        FROM raw.financial_accounts_by_awards AS faba
+        INNER JOIN global_temp.submission_attributes sa ON faba.submission_id = sa.submission_id
+    ) GROUP BY award_id
+) OUT ON  OUT.award_id = awards.id AND year(awards.date_signed - INTERVAL '3 month') = OUT.reporting_fiscal_year
 LEFT OUTER JOIN (
   SELECT
     faba.award_id,
