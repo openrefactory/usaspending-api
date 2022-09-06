@@ -433,12 +433,12 @@ LEFT OUTER JOIN (
     SELECT
         award_id,
         SUM(
-            gross_outlay_amount_by_award_cpe +
-            ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe +
-            ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe
+            COALESCE(gross_outlay_amount_by_award_cpe, 0) +
+            COALESCE(ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe, 0) +
+            COALESCE(ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe, 0)
         ) AS gross_outlay_by_award_net_of_refunds_cpe,
-        SUM(ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe) AS USSGL487200_downward_adj_prior_year_prepaid_undeliv_order_oblig,
-        SUM(ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe) AS USSGL497200_downward_adj_of_prior_year_paid_deliv_orders_oblig,
+        SUM(COALESCE(ussgl487200_down_adj_pri_ppaid_undel_orders_oblig_refund_cpe, 0)) AS USSGL487200_downward_adj_prior_year_prepaid_undeliv_order_oblig,
+        SUM(COALESCE(ussgl497200_down_adj_pri_paid_deliv_orders_oblig_refund_cpe, 0)) AS USSGL497200_downward_adj_of_prior_year_paid_deliv_orders_oblig,
         MIN(reporting_fiscal_year) AS reporting_fiscal_year
     FROM (
         SELECT
