@@ -368,4 +368,5 @@ class Command(BaseCommand):
         # Write to S3
         load_delta_table(spark, df, destination_table_name, True)
         if spark_created_by_command:
-            spark.stop()
+            logger.info("SKIPPING spark.stop()")
+            # spark.stop()
