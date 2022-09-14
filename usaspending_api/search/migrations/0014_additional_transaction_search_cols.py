@@ -175,7 +175,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactionsearch',
             name='transaction_unique_id',
-            field=models.TextField(default=1),
+            field=models.TextField(default="NONE"),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -1107,7 +1107,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactionsearch',
             name='solicitation_date',
-            field=models.TextField(null=True),
+            field=models.DateField(null=True),
         ),
         migrations.AddField(
             model_name='transactionsearch',

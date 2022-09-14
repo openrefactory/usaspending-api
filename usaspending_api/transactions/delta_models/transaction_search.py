@@ -216,7 +216,7 @@ TRANSACTION_SEARCH_COLUMNS = {
     "small_business_competitive": {"delta": "BOOLEAN", "postgres": "BOOLEAN"},
     "small_disadvantaged_busine": {"delta": "BOOLEAN", "postgres": "BOOLEAN"},
     "sole_proprietorship": {"delta": "BOOLEAN", "postgres": "BOOLEAN"},
-    "solicitation_date": {"delta": "STRING", "postgres": "TEXT"},
+    "solicitation_date": {"delta": "DATE", "postgres": "DATE"},
     "solicitation_identifier": {"delta": "STRING", "postgres": "TEXT"},
     "solicitation_procedur_desc": {"delta": "STRING", "postgres": "TEXT"},
     "solicitation_procedures": {"delta": "STRING", "postgres": "TEXT"},

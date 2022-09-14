@@ -14,7 +14,7 @@ class TransactionSearch(models.Model):
     # to allow for querying in the Django ORM
     transaction = models.OneToOneField("awards.TransactionNormalized", on_delete=models.DO_NOTHING, primary_key=True)
     award = models.ForeignKey("awards.Award", on_delete=models.DO_NOTHING, null=True)
-    transaction_unique_id = models.TextField(blank=False, null=False)
+    transaction_unique_id = models.TextField(blank=False, null=False, default="NONE")
     usaspending_unique_transaction_id = models.TextField(null=True)
     modification_number = models.TextField(null=True)
     detached_award_proc_unique = models.TextField(null=True)
@@ -231,7 +231,7 @@ class TransactionSearch(models.Model):
     small_business_competitive = models.BooleanField(null=True)
     small_disadvantaged_busine = models.BooleanField(null=True)
     sole_proprietorship = models.BooleanField(null=True)
-    solicitation_date = models.TextField(null=True)
+    solicitation_date = models.DateField(null=True)
     solicitation_identifier = models.TextField(null=True)
     solicitation_procedur_desc = models.TextField(null=True)
     solicitation_procedures = models.TextField(null=True)
