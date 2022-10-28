@@ -282,6 +282,10 @@ class Command(BaseCommand):
         if column_names:
             df = df.select(column_names)
 
+        # TODO: Just for testing purposes, remove when done testing
+        test_limit = 100
+        df = df.limit(test_limit)
+
         # If we're working off an existing table, truncate before loading in all the data
         if not make_new_table:
             with db.connection.cursor() as cursor:
