@@ -157,6 +157,8 @@ class Command(BaseCommand):
             "spark.sql.jsonGenerator.ignoreNullFields": "false",  # keep nulls in our json
         }
 
+        print('TEST')
+
         spark = get_active_spark_session()
         spark_created_by_command = False
         if not spark:
