@@ -281,6 +281,7 @@ class Command(BaseCommand):
         # always needed, this should help to prevent any future mismatch between the two.
         if column_names:
             df = df.select(column_names)
+            print(f"filtering down column names: {column_names}")
 
         # TODO: Just for testing purposes, remove when done testing
         test_limit = 100
