@@ -157,8 +157,6 @@ class Command(BaseCommand):
             "spark.sql.jsonGenerator.ignoreNullFields": "false",  # keep nulls in our json
         }
 
-        print('TEST')
-
         spark = get_active_spark_session()
         spark_created_by_command = False
         if not spark:
@@ -283,7 +281,6 @@ class Command(BaseCommand):
         # always needed, this should help to prevent any future mismatch between the two.
         if column_names:
             df = df.select(column_names)
-            print(f"filtering down column names: {column_names}")
 
         # TODO: Just for testing purposes, remove when done testing
         test_limit = 100
