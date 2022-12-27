@@ -39,6 +39,7 @@ class SubAgencyList(PaginationMixin, AgencyBase):
         page_metadata = get_pagination_metadata(len(results), self.pagination.limit, self.pagination.page)
         return Response(
             {
+                "reason": "Test if fixed",  # debug REMOVE THIS
                 "toptier_code": self.toptier_code,
                 "fiscal_year": self.fiscal_year,
                 "page_metadata": page_metadata,
@@ -66,8 +67,8 @@ class SubAgencyList(PaginationMixin, AgencyBase):
         office_codes = []
         for bucket in buckets:
             office_codes.extend([child.get("key") for child in bucket.get("offices").get("buckets")])
-            # remove any potential dups
-            office_codes = set(list(office_codes))
+        # remove any potential dups
+        office_codes = set(list(office_codes))
 
         # Get the current recipient info
         current_office_info = {}
